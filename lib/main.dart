@@ -3,6 +3,7 @@ import 'favorites_page.dart';
 import 'menu_page.dart';
 import 'profile_page.dart';
 import 'cart_page.dart';
+import 'order_form.dart'; // Import the order form page
 
 void main() {
   runApp(const CoffeeShopApp());
@@ -238,7 +239,40 @@ class _CoffeeShopHomePageState extends State<CoffeeShopHomePage>
                             ),
                             icon: const Icon(Icons.coffee),
                             label: const Text('Order Now'),
-                            onPressed: () {},
+                            onPressed: () {
+                              // Create a default set of items for quick ordering
+                              final List<CartItem> quickOrderItems = [
+                                CartItem(
+                                  name: "House Blend Coffee",
+                                  price: 3.49,
+                                  image:
+                                      "https://images.unsplash.com/photo-1495231916356-a86217efff12?w=500",
+                                  quantity: 1,
+                                  options: "Medium, Regular",
+                                ),
+                              ];
+
+                              // Calculate default totals
+                              double subtotal = 3.49; // Cost of the house blend
+                              double tax = subtotal * 0.08;
+                              double deliveryFee = 2.50;
+                              double total = subtotal + tax + deliveryFee;
+
+                              // Navigate to the order form
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => OrderFormPage(
+                                        cartItems: quickOrderItems,
+                                        subtotal: subtotal,
+                                        tax: tax,
+                                        deliveryFee: deliveryFee,
+                                        total: total,
+                                      ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),

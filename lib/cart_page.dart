@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'order_form.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -155,24 +156,91 @@ class _CartPageState extends State<CartPage> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  item.image,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                ),
+                child:
+                    item.useAssetImage
+                        ? Image.asset(
+                          item.image,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback if asset image fails
+                            return Container(
+                              width: 80,
+                              height: 80,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.1),
+                              child: Icon(
+                                Icons.coffee,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 40,
+                              ),
+                            );
+                          },
+                        )
+                        : Image.network(
+                          item.image,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback if network image fails
+                            return Container(
+                              width: 80,
+                              height: 80,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.1),
+                              child: Icon(
+                                Icons.coffee,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 40,
+                              ),
+                            );
+                          },
+                        ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          color: Colors.red.shade400,
+                          onPressed: () {
+                            setState(() {
+                              _cartItems.removeAt(index);
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${item.name} removed from cart'),
+                                action: SnackBarAction(
+                                  label: 'UNDO',
+                                  onPressed: () {
+                                    setState(() {
+                                      _cartItems.insert(index, item);
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     if (item.options.isNotEmpty)
@@ -250,6 +318,7 @@ class _CartPageState extends State<CartPage> {
         color:
             onPressed == null
                 ? Colors.grey.shade300
+                // ignore: deprecated_member_use
                 : Theme.of(context).colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(4),
       ),
@@ -390,46 +459,25 @@ class _CartPageState extends State<CartPage> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  _showOrderSuccessDialog();
+                  // Navigate to order form instead of directly showing success
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => OrderFormPage(
+                            cartItems: _cartItems,
+                            subtotal: _subtotal,
+                            tax: _tax,
+                            deliveryFee: _deliveryFee,
+                            total: _total,
+                          ),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
                 ),
-                child: const Text("PLACE ORDER"),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void _showOrderSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => AlertDialog(
-            title: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green[700]),
-                const SizedBox(width: 8),
-                const Text("Order Placed!"),
-              ],
-            ),
-            content: const Text(
-              "Your order has been placed successfully. You will receive a notification when your order is ready.",
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _cartItems.clear();
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                ),
-                child: const Text("OK"),
+                child: const Text("PROCEED TO CHECKOUT"),
               ),
             ],
           ),
@@ -443,6 +491,7 @@ class CartItem {
   final String image;
   int quantity;
   final String options;
+  final bool useAssetImage;
 
   CartItem({
     required this.name,
@@ -450,5 +499,6 @@ class CartItem {
     required this.image,
     required this.quantity,
     required this.options,
+    this.useAssetImage = false,
   });
 }
